@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { postsApi } from '../api/posts';
+import { BLOG_POSTS } from '../data/posts';
 import type { BlogPost } from '../types/blog';
 
 // 重新导出类型
@@ -7,15 +8,18 @@ export type { BlogPost };
 
 /**
  * 博客数据管理 Hook
- * NOTE: 使用后端 API 进行数据持久化
+ * NOTE: 使用后端 API 进行数据持久化，后端不可用时回退到本地静态数据
  */
 export function usePosts() {
     const [posts, setPosts] = useState<BlogPost[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    // NOTE: 标记是否使用本地数据（用于禁用编辑功能）
+    const [isLocalMode, setIsLocalMode] = useState(false);
 
     /**
      * 加载所有文章
+     * NOTE: 后端不可用时自动回退到本地静态数据
      */
     const loadPosts = useCallback(async () => {
         try {
@@ -23,9 +27,13 @@ export function usePosts() {
             setError(null);
             const data = await postsApi.getAll();
             setPosts(data);
+            setIsLocalMode(false);
         } catch (err) {
-            setError(err instanceof Error ? err.message : '加载失败');
-            console.error('加载文章失败:', err);
+            // FIXME: 后端不可用时使用本地静态数据
+            console.warn('后端连接失败，使用本地静态数据:', err);
+            setPosts(BLOG_POSTS);
+            setIsLocalMode(true);
+            setError(null); // 清除错误，使用本地数据正常展示
         } finally {
             setIsLoading(false);
         }
@@ -88,6 +96,7 @@ export function usePosts() {
         posts,
         isLoading,
         error,
+        isLocalMode, // NOTE: 本地模式下应禁用编辑功能
         createPost,
         updatePost,
         deletePost,
