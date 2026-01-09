@@ -5,11 +5,11 @@ import type { BlogPost } from '../types/blog';
  * NOTE: 使用丰富的中文内容展示真实博客效果
  */
 export const BLOG_POSTS: BlogPost[] = [
-    {
-        id: '1',
-        title: '探索 React 18 的并发特性',
-        excerpt: '深入了解 React 18 带来的并发渲染、自动批处理和 Suspense 改进，让你的应用更加流畅。',
-        content: `
+  {
+    id: '1',
+    title: '探索 React 18 的并发特性',
+    excerpt: '深入了解 React 18 带来的并发渲染、自动批处理和 Suspense 改进，让你的应用更加流畅。',
+    content: `
 ## React 18 的革命性更新
 
 React 18 引入了全新的并发渲染机制，这是 React 架构的一次重大升级。
@@ -55,17 +55,17 @@ function handleChange(e) {
 
 这些特性让 React 应用能够更智能地管理 UI 更新，为用户提供更好的体验。
     `,
-        author: '张三',
-        date: '2026-01-08',
-        coverImage: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=400&fit=crop',
-        tags: ['React', 'JavaScript', '前端开发'],
-        readTime: 8
-    },
-    {
-        id: '2',
-        title: 'TypeScript 高级类型技巧',
-        excerpt: '掌握条件类型、映射类型和模板字面量类型，写出更强大的类型定义。',
-        content: `
+    author: '张三',
+    date: '2026-01-08',
+    cover_image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&h=400&fit=crop',
+    tags: ['React', 'JavaScript', '前端开发'],
+    read_time: 8
+  },
+  {
+    id: '2',
+    title: 'TypeScript 高级类型技巧',
+    excerpt: '掌握条件类型、映射类型和模板字面量类型，写出更强大的类型定义。',
+    content: `
 ## TypeScript 类型体操
 
 TypeScript 的类型系统非常强大，让我们来探索一些高级技巧。
@@ -122,17 +122,17 @@ type GreetReturn = ReturnType<typeof greet>; // string
 
 掌握这些技巧，你就能写出更加健壮和可维护的 TypeScript 代码！
     `,
-        author: '李四',
-        date: '2026-01-06',
-        coverImage: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=400&fit=crop',
-        tags: ['TypeScript', '类型系统', '前端开发'],
-        readTime: 10
-    },
-    {
-        id: '3',
-        title: '现代 CSS 布局技巧',
-        excerpt: '从 Flexbox 到 Grid，再到 Container Queries，掌握现代 CSS 布局的精髓。',
-        content: `
+    author: '李四',
+    date: '2026-01-06',
+    cover_image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&h=400&fit=crop',
+    tags: ['TypeScript', '类型系统', '前端开发'],
+    read_time: 10
+  },
+  {
+    id: '3',
+    title: '现代 CSS 布局技巧',
+    excerpt: '从 Flexbox 到 Grid，再到 Container Queries，掌握现代 CSS 布局的精髓。',
+    content: `
 ## CSS 布局的现代艺术
 
 CSS 布局在过去几年有了翻天覆地的变化，让我们来看看最新的技巧。
@@ -196,17 +196,17 @@ Flexbox 在一维布局中依然强大：
 
 这些现代 CSS 技巧让布局变得更加简单和强大！
     `,
-        author: '王五',
-        date: '2026-01-04',
-        coverImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop',
-        tags: ['CSS', '布局', 'Web 设计'],
-        readTime: 6
-    },
-    {
-        id: '4',
-        title: '构建高性能 Web 应用',
-        excerpt: '从代码分割到缓存策略，全面提升你的 Web 应用性能。',
-        content: `
+    author: '王五',
+    date: '2026-01-04',
+    cover_image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=400&fit=crop',
+    tags: ['CSS', '布局', 'Web 设计'],
+    read_time: 6
+  },
+  {
+    id: '4',
+    title: '构建高性能 Web 应用',
+    excerpt: '从代码分割到缓存策略，全面提升你的 Web 应用性能。',
+    content: `
 ## Web 性能优化指南
 
 性能是用户体验的核心，让我们来看看如何构建高性能的 Web 应用。
@@ -268,10 +268,10 @@ getLCP(console.log);
 
 持续关注和优化性能，才能为用户提供最佳体验！
     `,
-        author: '赵六',
-        date: '2026-01-02',
-        coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop',
-        tags: ['性能优化', 'Web 开发', '最佳实践'],
-        readTime: 12
-    }
+    author: '赵六',
+    date: '2026-01-02',
+    cover_image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop',
+    tags: ['性能优化', 'Web 开发', '最佳实践'],
+    read_time: 12
+  }
 ];
