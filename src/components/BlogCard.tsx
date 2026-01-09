@@ -1,4 +1,4 @@
-import type { BlogPost } from '../types/blog';
+import type { BlogPost } from '../api/posts';
 import './BlogCard.css';
 
 interface BlogCardProps {
@@ -11,15 +11,26 @@ interface BlogCardProps {
  * NOTE: 展示单篇博客的预览信息
  */
 function BlogCard({ post, onClick }: BlogCardProps) {
+    // NOTE: 兼容 created_at 和 date 字段
+    const displayDate = post.created_at
+        ? new Date(post.created_at).toLocaleDateString('zh-CN')
+        : post.date || '';
+
     return (
         <article className="blog-card" onClick={() => onClick(post)}>
             <div className="card-image-wrapper">
-                <img
-                    src={post.coverImage}
-                    alt={post.title}
-                    className="card-image"
-                    loading="lazy"
-                />
+                {post.cover_image ? (
+                    <img
+                        src={post.cover_image}
+                        alt={post.title}
+                        className="card-image"
+                        loading="lazy"
+                    />
+                ) : (
+                    <div className="card-image-placeholder">
+                        <span>📝</span>
+                    </div>
+                )}
                 <div className="card-overlay" />
             </div>
             <div className="card-content">
@@ -33,9 +44,9 @@ function BlogCard({ post, onClick }: BlogCardProps) {
                 <div className="card-meta">
                     <span className="card-author">{post.author}</span>
                     <span className="card-dot">·</span>
-                    <span className="card-date">{post.date}</span>
+                    <span className="card-date">{displayDate}</span>
                     <span className="card-dot">·</span>
-                    <span className="card-read-time">{post.readTime} 分钟阅读</span>
+                    <span className="card-read-time">{post.read_time} 分钟阅读</span>
                 </div>
             </div>
         </article>

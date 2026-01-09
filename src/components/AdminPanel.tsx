@@ -16,12 +16,21 @@ interface AdminPanelProps {
 function AdminPanel({ posts, onEdit, onDelete, onCreateNew, onBack }: AdminPanelProps) {
     /**
      * 处理删除确认
-     * NOTE: 防止误删，需用户确认
      */
     const handleDelete = (post: BlogPost) => {
         if (window.confirm(`确定要删除文章「${post.title}」吗？`)) {
             onDelete(post.id);
         }
+    };
+
+    /**
+     * 格式化日期显示
+     */
+    const formatDate = (post: BlogPost): string => {
+        if (post.created_at) {
+            return new Date(post.created_at).toLocaleDateString('zh-CN');
+        }
+        return post.date || '';
     };
 
     return (
@@ -67,7 +76,7 @@ function AdminPanel({ posts, onEdit, onDelete, onCreateNew, onBack }: AdminPanel
                                 </span>
                             </span>
                             <span className="col-author">{post.author}</span>
-                            <span className="col-date">{post.date}</span>
+                            <span className="col-date">{formatDate(post)}</span>
                             <span className="col-actions">
                                 <button
                                     className="action-btn edit-btn"

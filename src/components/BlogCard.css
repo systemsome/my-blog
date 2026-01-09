@@ -107,3 +107,13 @@
         font-size: 1.1rem;
     }
 }
+
+.card-image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+    font-size: 4rem;
+}

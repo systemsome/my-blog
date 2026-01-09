@@ -1,29 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import { postsApi } from '../api/posts';
 import type { BlogPost } from '../types/blog';
 import './PostEditor.css';
 
 interface PostEditorProps {
     post?: BlogPost | null;
-    onSave: (postData: Omit<BlogPost, 'id'>) => void;
+    onSave: (postData: Omit<BlogPost, 'id' | 'created_at' | 'updated_at'>) => void;
     onCancel: () => void;
 }
 
 /**
  * 文章编辑器组件
- * NOTE: 支持新建和编辑两种模式
+ * NOTE: 支持 Markdown 编辑和实时预览
  */
 function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
     const isEditing = !!post;
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
         excerpt: '',
         content: '',
         author: '',
-        date: new Date().toISOString().split('T')[0],
-        coverImage: '',
+        cover_image: '',
         tags: '',
-        readTime: 5,
+        read_time: 5,
     });
 
     // 编辑模式时填充现有数据
@@ -34,10 +40,9 @@ function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
                 excerpt: post.excerpt,
                 content: post.content,
                 author: post.author,
-                date: post.date,
-                coverImage: post.coverImage,
+                cover_image: post.cover_image || '',
                 tags: post.tags.join(', '),
-                readTime: post.readTime,
+                read_time: post.read_time,
             });
         }
     }, [post]);
@@ -51,7 +56,45 @@ function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: name === 'readTime' ? parseInt(value) || 0 : value,
+            [name]: name === 'read_time' ? parseInt(value) || 0 : value,
+        }));
+    };
+
+    /**
+     * 处理图片上传
+     */
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            setIsUploading(true);
+            const imageUrl = await postsApi.uploadImage(file);
+
+            // 插入 Markdown 图片语法到内容中
+            const imageMarkdown = `![${file.name}](${imageUrl})`;
+            setFormData(prev => ({
+                ...prev,
+                content: prev.content + '\n' + imageMarkdown + '\n',
+            }));
+        } catch (err) {
+            alert('图片上传失败，请重试');
+            console.error(err);
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        }
+    };
+
+    /**
+     * 插入 Markdown 模板
+     */
+    const insertMarkdown = (template: string) => {
+        setFormData(prev => ({
+            ...prev,
+            content: prev.content + template,
         }));
     };
 
@@ -61,21 +104,19 @@ function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // NOTE: 简单验证
         if (!formData.title.trim() || !formData.content.trim()) {
             alert('标题和内容不能为空！');
             return;
         }
 
-        const postData: Omit<BlogPost, 'id'> = {
+        const postData: Omit<BlogPost, 'id' | 'created_at' | 'updated_at'> = {
             title: formData.title.trim(),
             excerpt: formData.excerpt.trim() || formData.content.slice(0, 100) + '...',
             content: formData.content.trim(),
             author: formData.author.trim() || '匿名',
-            date: formData.date,
-            coverImage: formData.coverImage.trim() || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&h=400&fit=crop',
+            cover_image: formData.cover_image.trim() || null,
             tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
-            readTime: formData.readTime || Math.ceil(formData.content.length / 500),
+            read_time: formData.read_time || Math.ceil(formData.content.length / 500),
         };
 
         onSave(postData);
@@ -90,7 +131,13 @@ function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
                 <h1 className="editor-title">
                     {isEditing ? '✏️ 编辑文章' : '✨ 新建文章'}
                 </h1>
-                <div style={{ width: '80px' }} />
+                <button
+                    type="button"
+                    className="preview-toggle"
+                    onClick={() => setShowPreview(!showPreview)}
+                >
+                    {showPreview ? '📝 编辑' : '👁️ 预览'}
+                </button>
             </div>
 
             <form className="editor-form" onSubmit={handleSubmit}>
@@ -120,22 +167,12 @@ function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
                         />
                     </div>
                     <div className="form-group">
-                        <label htmlFor="date">发布日期</label>
-                        <input
-                            type="date"
-                            id="date"
-                            name="date"
-                            value={formData.date}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="readTime">阅读时间（分钟）</label>
+                        <label htmlFor="read_time">阅读时间（分钟）</label>
                         <input
                             type="number"
-                            id="readTime"
-                            name="readTime"
-                            value={formData.readTime}
+                            id="read_time"
+                            name="read_time"
+                            value={formData.read_time}
                             onChange={handleChange}
                             min="1"
                             max="60"
@@ -155,32 +192,76 @@ function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
                     />
                 </div>
 
-                <div className="form-group">
-                    <label htmlFor="content">文章内容 *</label>
-                    <textarea
-                        id="content"
-                        name="content"
-                        value={formData.content}
-                        onChange={handleChange}
-                        placeholder="在这里写下你的文章内容..."
-                        rows={15}
-                        required
-                    />
+                {/* Markdown 工具栏 */}
+                <div className="markdown-toolbar">
+                    <span className="toolbar-label">Markdown 工具：</span>
+                    <button type="button" onClick={() => insertMarkdown('**粗体**')}>B</button>
+                    <button type="button" onClick={() => insertMarkdown('*斜体*')}>I</button>
+                    <button type="button" onClick={() => insertMarkdown('\n## 标题\n')}>H</button>
+                    <button type="button" onClick={() => insertMarkdown('\n- 列表项\n')}>•</button>
+                    <button type="button" onClick={() => insertMarkdown('\n```javascript\n// 代码\n```\n')}>{'</>'}</button>
+                    <button type="button" onClick={() => insertMarkdown('\n> 引用\n')}>❝</button>
+                    <button type="button" onClick={() => insertMarkdown('[链接](url)')}>🔗</button>
+                    <label className="upload-btn">
+                        📷 {isUploading ? '上传中...' : '上传图片'}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            disabled={isUploading}
+                            style={{ display: 'none' }}
+                        />
+                    </label>
+                </div>
+
+                <div className="form-group content-group">
+                    <label>文章内容 * (支持 Markdown)</label>
+
+                    {showPreview ? (
+                        <div className="markdown-preview">
+                            <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                rehypePlugins={[rehypeHighlight]}
+                            >
+                                {formData.content || '*暂无内容*'}
+                            </ReactMarkdown>
+                        </div>
+                    ) : (
+                        <textarea
+                            id="content"
+                            name="content"
+                            value={formData.content}
+                            onChange={handleChange}
+                            placeholder="在这里写下你的文章内容...
+
+支持 Markdown 语法：
+# 标题
+**粗体** *斜体*
+- 列表
+```javascript
+代码块
+```
+![图片](url)"
+                            rows={20}
+                            required
+                        />
+                    )}
                 </div>
 
                 <div className="form-group">
-                    <label htmlFor="coverImage">封面图片 URL</label>
+                    <label htmlFor="cover_image">封面图片 URL</label>
                     <input
                         type="url"
-                        id="coverImage"
-                        name="coverImage"
-                        value={formData.coverImage}
+                        id="cover_image"
+                        name="cover_image"
+                        value={formData.cover_image}
                         onChange={handleChange}
                         placeholder="https://..."
                     />
-                    {formData.coverImage && (
+                    {formData.cover_image && (
                         <div className="image-preview">
-                            <img src={formData.coverImage} alt="封面预览" />
+                            <img src={formData.cover_image} alt="封面预览" />
                         </div>
                     )}
                 </div>
@@ -201,7 +282,7 @@ function PostEditor({ post, onSave, onCancel }: PostEditorProps) {
                     <button type="button" className="secondary-btn" onClick={onCancel}>
                         取消
                     </button>
-                    <button type="submit" className="primary-btn">
+                    <button type="submit" className="primary-btn" disabled={isUploading}>
                         {isEditing ? '保存修改' : '发布文章'}
                     </button>
                 </div>

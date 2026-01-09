@@ -5,67 +5,47 @@ import BlogDetail from './components/BlogDetail';
 import AdminPanel from './components/AdminPanel';
 import PostEditor from './components/PostEditor';
 import Footer from './components/Footer';
-import { usePosts } from './hooks/usePosts';
-import type { BlogPost } from './types/blog';
+import { usePosts, type BlogPost } from './hooks/usePosts';
 import './App.css';
 
 /**
  * 视图类型定义
- * NOTE: 用于管理应用的不同页面状态
  */
 type ViewType = 'home' | 'detail' | 'admin' | 'editor';
 
 /**
  * 博客应用主组件
- * NOTE: 管理视图状态和全局数据
  */
 function App() {
-  const { posts, isLoading, createPost, updatePost, deletePost } = usePosts();
+  const { posts, isLoading, error, createPost, updatePost, deletePost, refreshPosts } = usePosts();
 
-  // 当前视图
   const [currentView, setCurrentView] = useState<ViewType>('home');
-  // 当前查看/编辑的文章
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
 
-  /**
-   * 导航到首页
-   */
   const goHome = () => {
     setCurrentView('home');
     setSelectedPost(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  /**
-   * 导航到管理页面
-   */
   const goAdmin = () => {
     setCurrentView('admin');
     setSelectedPost(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  /**
-   * 查看文章详情
-   */
   const viewPost = (post: BlogPost) => {
     setSelectedPost(post);
     setCurrentView('detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  /**
-   * 编辑文章
-   */
   const editPost = (post: BlogPost) => {
     setSelectedPost(post);
     setCurrentView('editor');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  /**
-   * 新建文章
-   */
   const createNewPost = () => {
     setSelectedPost(null);
     setCurrentView('editor');
@@ -75,23 +55,49 @@ function App() {
   /**
    * 保存文章（新建或编辑）
    */
-  const handleSavePost = (postData: Omit<BlogPost, 'id'>) => {
-    if (selectedPost) {
-      // 编辑模式
-      updatePost(selectedPost.id, postData);
-    } else {
-      // 新建模式
-      createPost(postData);
+  const handleSavePost = async (postData: Omit<BlogPost, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      if (selectedPost) {
+        await updatePost(selectedPost.id, postData);
+      } else {
+        await createPost(postData);
+      }
+      goAdmin();
+    } catch (err) {
+      alert('保存失败，请检查后端服务是否运行');
+      console.error(err);
     }
-    goAdmin();
   };
 
   /**
    * 删除文章
    */
-  const handleDeletePost = (id: string) => {
-    deletePost(id);
+  const handleDeletePost = async (id: string) => {
+    try {
+      await deletePost(id);
+    } catch (err) {
+      alert('删除失败，请检查后端服务是否运行');
+      console.error(err);
+    }
   };
+
+  // 错误状态
+  if (error && posts.length === 0) {
+    return (
+      <div className="app">
+        <Header currentView={currentView} onNavClick={goHome} onAdminClick={goAdmin} />
+        <main className="main-content">
+          <div className="error-state">
+            <h2>⚠️ 无法连接到后端服务</h2>
+            <p>{error}</p>
+            <p>请确保后端服务正在运行：</p>
+            <code>cd backend && uvicorn main:app --reload</code>
+            <button onClick={refreshPosts} className="retry-btn">重试</button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   // 加载中状态
   if (isLoading) {
@@ -125,15 +131,24 @@ function App() {
               </p>
             </section>
 
-            <section className="blog-grid">
-              {posts.map((post) => (
-                <BlogCard
-                  key={post.id}
-                  post={post}
-                  onClick={viewPost}
-                />
-              ))}
-            </section>
+            {posts.length === 0 ? (
+              <div className="empty-home">
+                <p>暂无文章，去管理页面创建第一篇吧！</p>
+                <button onClick={goAdmin} className="go-admin-btn">
+                  进入管理
+                </button>
+              </div>
+            ) : (
+              <section className="blog-grid">
+                {posts.map((post) => (
+                  <BlogCard
+                    key={post.id}
+                    post={post}
+                    onClick={viewPost}
+                  />
+                ))}
+              </section>
+            )}
           </>
         )}
 
